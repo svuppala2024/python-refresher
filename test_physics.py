@@ -1,5 +1,6 @@
 import physics
 import unittest
+import numpy as np
 
 
 class TestPhysics(unittest.TestCase):
@@ -49,6 +50,144 @@ class TestPhysics(unittest.TestCase):
         self.assertRaises(ValueError, physics.calculate_moment_of_inertia, 0, 10)
         self.assertRaises(ValueError, physics.calculate_moment_of_inertia, -10, 10)
         self.assertRaises(ValueError, physics.calculate_moment_of_inertia, 10, -10)
+
+    def test_calculate_auv_acceleration(self):
+        self.assertEqual(physics.calculate_auv_acceleration(100, 0), 1)
+        self.assertRaises(ValueError, physics.calculate_auv_acceleration, 101, 0)
+        self.assertRaises(ValueError, physics.calculate_auv_acceleration, 1, 45)
+        self.assertRaises(
+            ValueError, physics.calculate_auv_acceleration, -10, -10, -10, -10, -10
+        )
+
+    def test_calculate_auv_angular_acceleration(self):
+        self.assertEqual(physics.calculate_auv_angular_acceleration(100, 0), 50)
+        self.assertRaises(
+            ValueError, physics.calculate_auv_angular_acceleration, 101, 0
+        )
+        self.assertRaises(ValueError, physics.calculate_auv_angular_acceleration, 1, 45)
+        self.assertRaises(
+            ValueError, physics.calculate_auv_angular_acceleration, -10, -10, -10, -10
+        )
+
+    def test_calculate_auv2_acceleration(self):
+        self.assertTrue(
+            np.allclose(
+                physics.calculate_auv2_acceleration(
+                    np.array([100, 100, 100, 100]), np.pi / 2, 0
+                ),
+                np.array([0, 0]),
+            )
+        )
+        self.assertRaises(
+            ValueError, physics.calculate_auv2_acceleration, np.array([110]), 0, 0
+        )
+
+    def test_calculate_auv2_angular_acceleration(self):
+        self.assertEqual(
+            physics.calculate_auv2_angular_acceleration(
+                np.array([40, 20, 30, 10]), np.pi / 2, 5, 10
+            ),
+            4,
+        )
+        self.assertNotEqual(
+            physics.calculate_auv2_angular_acceleration(
+                np.array([40, 20, 30, 10]), np.pi / 2, 5, 10
+            ),
+            2,
+        )
+        self.assertRaises(
+            ValueError,
+            physics.calculate_auv2_angular_acceleration,
+            np.array([110]),
+            20,
+            20,
+            20,
+            20,
+        )
+        self.assertRaises(
+            ValueError,
+            physics.calculate_auv2_angular_acceleration,
+            np.array([10, -10, 10, -10]),
+            20,
+            20,
+            -20,
+            -20,
+        )
+
+    def test_simulate_auv2_motion(self):
+        (
+            t_test,
+            x_test,
+            y_test,
+            theta_test,
+            v_test,
+            omega_test,
+            a_test,
+        ) = physics.simulate_auv2_motion(
+            np.array([1, 0, 1, 0]), 0.5, 1.5, 1.8, dt=0.5, t_final=1.5
+        )
+        self.assertEqual(t_test[0], 0)
+        self.assertEqual(t_test[1], 0.5)
+        self.assertEqual(t_test[2], 1.0)
+        self.assertEqual(np.all(x_test), 0)
+        self.assertEqual(np.all(y_test), 0)
+        self.assertEqual(theta_test[0], 0)
+        self.assertEqual(theta_test[1], 0.010896699061615622)
+        self.assertEqual(theta_test[2], 0.03269009718484686)
+        self.assertEqual(np.all(v_test), 0)
+        self.assertEqual(np.all(a_test), 0)
+        self.assertEqual(omega_test[0], 0)
+        self.assertEqual(omega_test[1], 0.021793398123231243)
+        self.assertRaises(
+            ValueError,
+            physics.simulate_auv2_motion,
+            np.array([1, 0]),
+            0.5,
+            1.5,
+            1.8,
+            dt=0.5,
+            t_final=1.5,
+        )
+        self.assertRaises(
+            ValueError,
+            physics.simulate_auv2_motion,
+            np.array([1, 0, 1, 0]),
+            0.5,
+            -1.5,
+            1.8,
+            dt=0.5,
+            t_final=1.5,
+        )
+        self.assertRaises(
+            ValueError,
+            physics.simulate_auv2_motion,
+            np.array([1, 0, 1, 0]),
+            0.5,
+            1.5,
+            -1.8,
+            dt=0.5,
+            t_final=1.5,
+        )
+        self.assertRaises(
+            ValueError,
+            physics.simulate_auv2_motion,
+            np.array([1, 0, 1, 0]),
+            0.5,
+            1.5,
+            1.8,
+            dt=-0.5,
+            t_final=1.5,
+        )
+        self.assertRaises(
+            ValueError,
+            physics.simulate_auv2_motion,
+            np.array([1, 0, 1, 0]),
+            0.5,
+            1.5,
+            1.8,
+            dt=0.5,
+            t_final=-1.5,
+        )
 
 
 if __name__ == "__main__":
